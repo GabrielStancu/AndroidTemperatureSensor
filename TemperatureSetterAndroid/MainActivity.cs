@@ -20,6 +20,8 @@ namespace TemperatureSetterAndroid
         private BluetoothModule _bluetoothModule;
         private bool _initialized = false;
         private double _temperature = 0.0f;
+        private string _temperatureDisplayFormat = "{0} °C";
+        private double[] _temperatureVariations = new double[] { 0.1f, 1.0f, 5.0f };
 
         protected async override void OnCreate(Bundle savedInstanceState)
         {
@@ -50,48 +52,40 @@ namespace TemperatureSetterAndroid
         {
             _increaseTempButton0.Click += (sender, e) =>
             {
-                IncreaseTemperature(0.1);
+                SetTemperature(_temperatureVariations[0]);
             };
 
             _increaseTempButton1.Click += (sender, e) =>
             {
-                IncreaseTemperature(1.0);
+                SetTemperature(_temperatureVariations[1]);
             };
 
             _increaseTempButton5.Click += (sender, e) =>
             {
-                IncreaseTemperature(5.0);
+                SetTemperature(_temperatureVariations[2]);
             };
 
             _decreaseTempButton0.Click += (sender, e) =>
             {
-                DecreaseTemperature(0.1);
+                SetTemperature(-_temperatureVariations[0]);
             };
 
             _decreaseTempButton1.Click += (sender, e) =>
             {
-                DecreaseTemperature(1.0);
+                SetTemperature(-_temperatureVariations[1]);
             };
 
             _decreaseTempButton5.Click += (sender, e) =>
             {
-                DecreaseTemperature(5.0);
+                SetTemperature(-_temperatureVariations[2]);
             };
         }
 
-        private async void IncreaseTemperature(double increase)
+        private async void SetTemperature(double increase)
         {
             double crtTemp = double.Parse(_desiredTempTextView.Text.Substring(0, _desiredTempTextView.Text.Length - 2));
             crtTemp += increase;
-            _desiredTempTextView.Text = $"{crtTemp} °C";
-            await _bluetoothModule.SendDesiredTemp((int)(crtTemp * 10));
-        }
-
-        private async void DecreaseTemperature(double increase)
-        {
-            double crtTemp = double.Parse(_desiredTempTextView.Text.Substring(0, _desiredTempTextView.Text.Length - 2));
-            crtTemp -= increase;
-            _desiredTempTextView.Text = $"{crtTemp} °C";
+            _desiredTempTextView.Text = string.Format(_temperatureDisplayFormat, crtTemp);
             await _bluetoothModule.SendDesiredTemp((int)(crtTemp * 10));
         }
 
@@ -102,15 +96,15 @@ namespace TemperatureSetterAndroid
 
             while (true)
             {
-                _temperature = 1.0 * (await _bluetoothModule.ReadCurrentTemp()) / 10;
-                await Task.Delay(2000);
+                _temperature = (float)(await _bluetoothModule.ReadCurrentTemp()) / 10;
+                await Task.Delay(BluetoothModule.CommunicationDelay);
                 DisplayCurrentTemperature();
             }        
         }
 
         private void DisplayCurrentTemperature()
         {
-            _crtTempTextView.Text = $"{_temperature} °C";
+            _crtTempTextView.Text = string.Format(_temperatureDisplayFormat, _temperature);
 
             if (!_initialized)
             {

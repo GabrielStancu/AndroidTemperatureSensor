@@ -11,6 +11,17 @@ namespace TemperatureSetterAndroid
     {
         private BluetoothSocket _socket;
         private byte[] _buffer;
+        private const int BufferLength = 20;
+        private const string Socket = "00001101-0000-1000-8000-00805f9b34fb";
+        private const string DeviceName = "HC-05";
+        private const string ReceivedDataPackageStart = "T";
+        private const string SentDataPackageStart = "S";
+        private const int PackageEnd = 13;
+        private const int PackageLength = 5;
+        private const int ShortPackageLength = 3;
+        private const int NoDataReceivedCode = -1;
+
+        public const int CommunicationDelay = 500;
 
         public async Task ConnectToBluetooth()
         {
@@ -21,17 +32,15 @@ namespace TemperatureSetterAndroid
             if (!adapter.IsEnabled)
                 throw new Exception("Bluetooth adapter is not enabled.");
 
-            BluetoothDevice device = (from bd in adapter.BondedDevices
-                                      where bd.Name == "HC-05"
-                                      select bd).FirstOrDefault();
+            BluetoothDevice device = adapter.BondedDevices.Where(bd => bd.Name.Equals(DeviceName)).FirstOrDefault();
 
             if (device == null)
                 throw new Exception("Named device not found.");
 
-            _socket = device.CreateRfcommSocketToServiceRecord(UUID.FromString("00001101-0000-1000-8000-00805f9b34fb"));
+            _socket = device.CreateRfcommSocketToServiceRecord(UUID.FromString(Socket));
             await _socket.ConnectAsync();
 
-            _buffer = new byte[20];
+            _buffer = new byte[BufferLength];
         }  
 
         public async Task<int> ReadCurrentTemp()
@@ -39,7 +48,7 @@ namespace TemperatureSetterAndroid
             await _socket.InputStream.ReadAsync(_buffer, 0, _buffer.Length);
             int packageStart = GetPackageStartByteIndex();
 
-            if(packageStart == -1)
+            if(packageStart == NoDataReceivedCode)
             {
                 throw new Exception("No data received.");
             }
@@ -51,19 +60,19 @@ namespace TemperatureSetterAndroid
         {
             for (int i = 0; i < _buffer.Length; i++)
             {
-                if (_buffer[i] == Encoding.ASCII.GetBytes("T")[0])
+                if (_buffer[i] == Encoding.ASCII.GetBytes(ReceivedDataPackageStart)[0])
                 {
                     return ++i;
                 }
             }
 
-            return -1;
+            return NoDataReceivedCode;
         }
 
         private int ComputeCurrentTemp(int packageStart)
         {
             int temp = 0;
-            for (int i = packageStart; i < packageStart + 3; i++)
+            for (int i = packageStart; i < packageStart + ShortPackageLength; i++)
             {
                 temp = temp * 10 + Int32.Parse(((char)_buffer[i]).ToString());
             }
@@ -73,15 +82,16 @@ namespace TemperatureSetterAndroid
 
         public async Task SendDesiredTemp(int temp)
         {
-            byte[] sendBuffer = new byte[5];
-            sendBuffer[0] = Encoding.ASCII.GetBytes("S")[0];
+            byte[] sendBuffer = new byte[PackageLength];
+          
+            sendBuffer[0] = Encoding.ASCII.GetBytes(SentDataPackageStart)[0];
             sendBuffer[1] = Encoding.ASCII.GetBytes((temp / 100).ToString())[0];
             sendBuffer[2] = Encoding.ASCII.GetBytes((temp / 10 % 10).ToString())[0];
             sendBuffer[3] = Encoding.ASCII.GetBytes((temp % 10).ToString())[0];
-            sendBuffer[4] = 13;
+            sendBuffer[4] = PackageEnd;
 
             await _socket.OutputStream.WriteAsync(sendBuffer, 0, sendBuffer.Length);
-            await Task.Delay(500);
+            await Task.Delay(CommunicationDelay);
         }
     }
 }
