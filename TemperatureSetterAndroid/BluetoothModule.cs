@@ -1,15 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Android.App;
 using Android.Bluetooth;
-using Android.Content;
-using Android.OS;
-using Android.Runtime;
-using Android.Views;
-using Android.Widget;
 using Java.Util;
 
 namespace TemperatureSetterAndroid
@@ -60,7 +53,7 @@ namespace TemperatureSetterAndroid
             {
                 if (_buffer[i] == Encoding.ASCII.GetBytes("T")[0])
                 {
-                    return (i + 1);
+                    return ++i;
                 }
             }
 
@@ -78,10 +71,17 @@ namespace TemperatureSetterAndroid
             return temp;
         }
 
-        public async Task SendDesiredTemp()
+        public async Task SendDesiredTemp(int temp)
         {
-            //await _socket.OutputStream.WriteAsync(buffer, 0, buffer.Length);
-            await Task.Delay(10);
+            byte[] sendBuffer = new byte[5];
+            sendBuffer[0] = Encoding.ASCII.GetBytes("S")[0];
+            sendBuffer[1] = Encoding.ASCII.GetBytes((temp / 100).ToString())[0];
+            sendBuffer[2] = Encoding.ASCII.GetBytes((temp / 10 % 10).ToString())[0];
+            sendBuffer[3] = Encoding.ASCII.GetBytes((temp % 10).ToString())[0];
+            sendBuffer[4] = 13;
+
+            await _socket.OutputStream.WriteAsync(sendBuffer, 0, sendBuffer.Length);
+            await Task.Delay(500);
         }
     }
 }

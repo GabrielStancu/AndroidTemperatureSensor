@@ -37,13 +37,33 @@
         />
 
     <Button
-        android:id="@+id/IncreaseTempButton"
-        android:layout_width="200px"
-        android:layout_height="200px"
-        android:text="+"
+        android:id="@+id/IncreaseTempButton0"
+        android:layout_width="300px"
+        android:layout_height="210px"
+        android:text="+ 0.1"
+        android:textSize="70px"
+        android:layout_marginTop="247.0dp" 
+        android:layout_marginLeft="20.0dp" 
+            />
+
+    <Button
+        android:id="@+id/IncreaseTempButton1"
+        android:layout_width="300px"
+        android:layout_height="210px"
+        android:text="+ 1.0"
         android:textSize="70px"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="247.0dp" 
+            />
+
+    <Button
+        android:id="@+id/IncreaseTempButton5"
+        android:layout_width="300px"
+        android:layout_height="210px"
+        android:text="+ 5.0"
+        android:textSize="70px"
+        android:layout_marginTop="247.0dp"
+        android:layout_marginLeft="258.0dp" 
             />
 
     <TextView
@@ -57,12 +77,32 @@
         />
 
     <Button
-        android:id="@+id/DecreaseTempButton"
-        android:layout_width="200px"
-        android:layout_height="200px"
-        android:text="-"
+        android:id="@+id/DecreaseTempButton0"
+        android:layout_width="300px"
+        android:layout_height="210px"
+        android:text="- 0.1"
+        android:textSize="70px"
+        android:layout_marginTop="423.5dp" 
+        android:layout_marginLeft="20dp" 
+            />
+
+    <Button
+        android:id="@+id/DecreaseTempButton1"
+        android:layout_width="300px"
+        android:layout_height="210px"
+        android:text="- 1.0"
         android:textSize="70px"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="423.5dp" 
+            />
+
+    <Button
+        android:id="@+id/DecreaseTempButton5"
+        android:layout_width="300px"
+        android:layout_height="210px"
+        android:text="- 5.0"
+        android:textSize="70px"
+        android:layout_marginTop="423.5dp"
+        android:layout_marginLeft="258.0dp" 
             />
 </RelativeLayout>
