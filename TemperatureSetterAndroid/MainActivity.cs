@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,6 +11,7 @@ using Android.Support.Design.Widget;
 using Android.Support.V7.App;
 using Android.Views;
 using Android.Widget;
+using Java.Lang;
 using Java.Util;
 
 namespace TemperatureSetterAndroid
@@ -17,11 +19,13 @@ namespace TemperatureSetterAndroid
     [Activity(Label = "@string/app_name", Theme = "@style/AppTheme.NoActionBar", MainLauncher = true)]
     public class MainActivity : AppCompatActivity
     {
-        TextView crtTempTextView;
-        TextView desiredTempTextView;
-        private BluetoothSocket _socket;
-        private byte[] buffer;
+        private TextView _crtTempTextView;
+        private TextView _desiredTempTextView;
+        private Button _increaseTempButton;
+        private Button _decreaseTempButton;
+        private BluetoothModule _bluetoothModule;
         private bool _initialized = false;
+        private double _temperature = 0.0f;
 
         protected async override void OnCreate(Bundle savedInstanceState)
         {
@@ -29,89 +33,60 @@ namespace TemperatureSetterAndroid
             Xamarin.Essentials.Platform.Init(this, savedInstanceState);
             SetContentView(Resource.Layout.activity_main);
 
-            Button increaseTempButton = FindViewById<Button>(Resource.Id.IncreaseTempButton);
-            Button decreaseTempButton = FindViewById<Button>(Resource.Id.DecreaseTempButton);
-            crtTempTextView = FindViewById<TextView>(Resource.Id.CrtTemperatureTextView);
-            desiredTempTextView = FindViewById<TextView>(Resource.Id.DesiredTemperatureTextView);
+            GetViewsIds();
+            AddEventHandlers();
+            await EstablishBluetoothCommunication();
+        }
 
-            increaseTempButton.Click += async (sender, e) =>
+        private void GetViewsIds()
+        {
+            _increaseTempButton = FindViewById<Button>(Resource.Id.IncreaseTempButton);
+            _decreaseTempButton = FindViewById<Button>(Resource.Id.DecreaseTempButton);
+            _crtTempTextView = FindViewById<TextView>(Resource.Id.CrtTemperatureTextView);
+            _desiredTempTextView = FindViewById<TextView>(Resource.Id.DesiredTemperatureTextView);
+        }
+
+        private void AddEventHandlers()
+        {
+            _increaseTempButton.Click += async (sender, e) =>
             {
-                double crtTemp = double.Parse(desiredTempTextView.Text.Substring(0, desiredTempTextView.Text.Length - 2));
+                double crtTemp = double.Parse(_desiredTempTextView.Text.Substring(0, _desiredTempTextView.Text.Length - 2));
                 crtTemp += 0.1;
-                desiredTempTextView.Text = $"{crtTemp} °C";
-                await SendDesiredTemp();
+                _desiredTempTextView.Text = $"{crtTemp} °C";
+                await _bluetoothModule.SendDesiredTemp();
             };
 
-            decreaseTempButton.Click += async (sender, e) =>
+            _decreaseTempButton.Click += async (sender, e) =>
             {
-                double crtTemp = double.Parse(desiredTempTextView.Text.Substring(0, desiredTempTextView.Text.Length - 2));
+                double crtTemp = double.Parse(_desiredTempTextView.Text.Substring(0, _desiredTempTextView.Text.Length - 2));
                 crtTemp -= 0.1;
-                desiredTempTextView.Text = $"{crtTemp} °C";
-                await SendDesiredTemp();
+                _desiredTempTextView.Text = $"{crtTemp} °C";
+                await _bluetoothModule.SendDesiredTemp();
             };
-
-            buffer = new byte[20];
-            await ConnectToBluetooth();
-            await DisplayCurrentTemp();
         }
 
-        private async Task ConnectToBluetooth()
+        private async Task EstablishBluetoothCommunication()
         {
-            BluetoothAdapter adapter = BluetoothAdapter.DefaultAdapter;
-            if (adapter == null)
-                throw new Exception("No Bluetooth adapter found.");
+            _bluetoothModule = new BluetoothModule();
+            await _bluetoothModule.ConnectToBluetooth();
 
-            if (!adapter.IsEnabled)
-                throw new Exception("Bluetooth adapter is not enabled.");
-
-            BluetoothDevice device = (from bd in adapter.BondedDevices
-                                      where bd.Name == "HC-05"
-                                      select bd).FirstOrDefault();
-
-            if (device == null)
-                throw new Exception("Named device not found.");
-
-            _socket = device.CreateRfcommSocketToServiceRecord(UUID.FromString("00001101-0000-1000-8000-00805f9b34fb"));
-            await _socket.ConnectAsync();
-        }
-
-        private async Task DisplayCurrentTemp()
-        {
-            while (await _socket.InputStream.ReadAsync(buffer, 0, buffer.Length) != 0)
+            while (true)
             {
-                int packageStart = 0;
-
-                for (int i = 0; i < buffer.Length; i++)
-                {
-                    if (buffer[i] == Encoding.ASCII.GetBytes("T")[0])
-                    {
-                        packageStart = i + 1;
-                        break;
-                    }
-                }
-
-                int temp = 0;
-                for (int i = packageStart; i < packageStart + 3; i++)
-                {
-                    temp = temp * 10 + Int32.Parse(((char)buffer[i]).ToString());
-                }
-
-                crtTempTextView.Text = $"{temp / 10}.{temp % 10}";
-
-                if(!_initialized)
-                {
-                    _initialized = true;
-                    desiredTempTextView.Text = crtTempTextView.Text;
-                }
-
-                await Task.Delay(2000);
-            }
+                _temperature = 1.0 * (await _bluetoothModule.ReadCurrentTemp()) / 10;
+                await Task.Delay(500);
+                DisplayCurrentTemperature();
+            }        
         }
 
-        private async Task SendDesiredTemp()
+        private void DisplayCurrentTemperature()
         {
-            //await _socket.OutputStream.WriteAsync(buffer, 0, buffer.Length);
-            await Task.Delay(10);
+            _crtTempTextView.Text = $"{_temperature}";
+
+            if (!_initialized)
+            {
+                _initialized = true;
+                _desiredTempTextView.Text = _crtTempTextView.Text;
+            }
         }
     }
 }
