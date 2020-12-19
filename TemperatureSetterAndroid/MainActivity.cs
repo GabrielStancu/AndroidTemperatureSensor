@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Android.App;
 using Android.OS;
 using Android.Support.V7.App;
@@ -20,8 +21,9 @@ namespace TemperatureSetterAndroid
         private BluetoothModule _bluetoothModule;
         private bool _initialized = false;
         private double _temperature = 0.0f;
-        private string _temperatureDisplayFormat = "{0} °C";
-        private double[] _temperatureVariations = new double[] { 0.1f, 1.0f, 5.0f };
+        private readonly string _temperatureDisplayFormat = "{0} °C";
+        private readonly double[] _temperatureVariations = new double[] { 0.1, 1.0, 5.0 };
+        private readonly int decimalPlaces = 1;
 
         protected async override void OnCreate(Bundle savedInstanceState)
         {
@@ -85,6 +87,7 @@ namespace TemperatureSetterAndroid
         {
             double crtTemp = double.Parse(_desiredTempTextView.Text.Substring(0, _desiredTempTextView.Text.Length - 2));
             crtTemp += increase;
+            crtTemp = Math.Round(crtTemp, decimalPlaces);
             _desiredTempTextView.Text = string.Format(_temperatureDisplayFormat, crtTemp);
             await _bluetoothModule.SendDesiredTemp((int)(crtTemp * 10));
         }
@@ -96,7 +99,7 @@ namespace TemperatureSetterAndroid
 
             while (true)
             {
-                _temperature = (float)(await _bluetoothModule.ReadCurrentTemp()) / 10;
+                _temperature = Math.Round((double)(await _bluetoothModule.ReadCurrentTemp()) / 10, decimalPlaces);
                 await Task.Delay(BluetoothModule.CommunicationDelay);
                 DisplayCurrentTemperature();
             }        

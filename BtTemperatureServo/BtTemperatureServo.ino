@@ -1,103 +1,80 @@
 #include <Servo.h>
-//#include <SoftwareSerial.h>
 
 int txPin = 1;
 int rxPin = 0;
 int digitalPin = 7; // KY-028 digital interface
 int analogPin = A2; // KY-028 analog interface
+int servoPin = 11;
+
 int angle = 0;
 int temp;
-bool incTemp = false, decTemp = false;
+
+const int minTemp = 150;
+const int maxTemp = 350;
+const int minAngle = 0;
+const int maxAngle = 180;
+const char sendDataPackageStartByte = 'T';
+const int receiveDataPackageStartByteVal = 83; //"S"
+const int receiveDataPackageEndByteVal = 13; 
+const int servoWriteDelay = 100;
 
 Servo servo;
-//SoftwareSerial BT(txPin,rxPin);
-
 void setup() {
   pinMode(digitalPin, INPUT);
   pinMode(analogPin, INPUT);
 
-  //BT.begin(9600);
   Serial.begin(9600);
 }
 
 void loop() {
-  temp = analogRead(analogPin);
-  Serial.print("T");
-  Serial.print(temp); 
-  Serial.println();
-
-  readData();
-
-  /*if (BT.available())
+  if(Serial.available() <= 0)
   {
-    //Serial.println("here");
-    char bytesToSend[3];
-    bytesToSend[0] = 42;
-    bytesToSend[1] = temp/10;
-    bytesToSend[2] = temp%10;
-    bytesToSend[3] = 48;
-    BT.println(bytesToSend);
-    /*Serial.print((int)bytesToSend[1]);
-    Serial.print(".");
-    Serial.print((int)bytesToSend[2]);
+    temp = analogRead(analogPin);
+    Serial.print(sendDataPackageStartByte);
+    Serial.print(temp); 
     Serial.println();
-
-    BT.write(temp/10);
-    BT.write(temp%10);
   }
   else 
   {
-    Serial.println("unavailable");
-  }*/
-
-  /*if(incTemp)
-  {
-    servo.attach(11);
-    delay(100);
-    
-    servo.write(90);
-    delay(100);
-    servo.write(135);
-    delay(100);
-    servo.write(180);
-    delay(100);
-    servo.write(135);
-    delay(100);
-
-    servo.detach();
+    readData();
     delay(100);
   }
-  else if(decTemp)
-  {
-    servo.attach(11);
-    delay(100);
-    
-    servo.write(90);
-    delay(100);
-    servo.write(45);
-    delay(100);
-    servo.write(0);
-    delay(100);
-    servo.write(45);
-    delay(100);
-
-    servo.detach();
-    delay(100);
-  }*/
 }
 
 void readData()
 {
   if (Serial.available())
-  {   
-      String btInput = Serial.readString();   
-      int desiredTemp = btInput.toInt();
-      int desiredAngle = map(desiredTemp, 15, 30, 0, 180);
+  {       
+    char temp[3];
+    while(Serial.available() > 0)
+    {
+      char crtByte = Serial.read();
+      if (crtByte == receiveDataPackageStartByteVal) 
+      {
+        temp[0] = Serial.read();
+        temp[1] = Serial.read();
+        temp[2] = Serial.read();
 
-      servo.attach(11);
-      delay(100);
-      servo.write(desiredAngle);
-      servo.detach();
-      delay(100);
+        if(Serial.read() != receiveDataPackageEndByteVal)
+        {
+          return;
+        }
+        
+        break;
+      } 
+    }
+    
+    int desiredTemp = atoi(temp);
+    int desiredAngle = map(desiredTemp, minTemp, maxTemp, minAngle, maxAngle);
+    turnServo(desiredAngle);
   }
+}
+
+void turnServo(int angle)
+{
+  servo.attach(servoPin);
+  delay(servoWriteDelay);
+  servo.write(angle);
+  servo.detach();
+  delay(servoWriteDelay);
 }
