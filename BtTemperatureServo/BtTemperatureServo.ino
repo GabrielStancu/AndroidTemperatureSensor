@@ -17,7 +17,8 @@ const int maxAngle = 180;
 const char sendDataPackageStartByte = 'T';
 const int receiveDataPackageStartByteVal = 83; //"S"
 const int receiveDataPackageEndByteVal = 13; 
-const int servoWriteDelay = 100;
+const int communicationDelay = 1000;
+const int servoDelay = 100;
 
 SoftwareSerial BT(2,3);
 
@@ -37,7 +38,7 @@ void loop() {
     BT.print(sendDataPackageStartByte);
     BT.print(temp); 
     BT.println();
-    delay(1000);
+    delay(communicationDelay);
   }
   else 
   {
@@ -70,24 +71,27 @@ void readData()
     
     int desiredTemp = atoi(temp);
     int desiredAngle = map(desiredTemp, minTemp, maxTemp, minAngle, maxAngle);
-
-    Serial.println("Desired Temperature:");
-    Serial.println(desiredTemp);
-
-    Serial.println("Desired Angle:");
-    Serial.println(desiredAngle);
+    printDataToSerial(desiredTemp, desiredAngle);   
     
     turnServo(desiredAngle);
-    delay(1000);
   }
+}
+
+void printDataToSerial(int desiredTemp, int desiredAngle)
+{
+  Serial.println("Desired Temperature:");
+  Serial.println(desiredTemp);
+
+  Serial.println("Desired Angle:");
+  Serial.println(desiredAngle);
 }
 
 void turnServo(int angle)
 {
   servo.attach(servoPin);
-  delay(servoWriteDelay);
+  delay(servoDelay);
   servo.write(angle);
-  delay(1000);
+  delay(servoDelay);
   servo.detach();
-  delay(servoWriteDelay);
+  delay(servoDelay);
 }

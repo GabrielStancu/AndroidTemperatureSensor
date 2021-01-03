@@ -5,35 +5,40 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:showIn="@layout/activity_main">
+    tools:showIn="@layout/activity_main"
+    android:background="@android:color/holo_orange_light"
+    >
 
     
-        <TextView
+    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Current temperature:"
-        android:textSize="70px"
+        android:textSize="100px"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="12.0dp" 
-        />
+        android:layout_marginTop="27.0dp" 
+        android:fontFamily="monospace"
+    />
 
     <TextView
-        android:text="Initializing..."
+        android:text="Connecting.."
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:textSize="120px"
+        android:textSize="200px"
         android:id="@+id/CrtTemperatureTextView"
-        android:layout_marginTop="62.5dp" 
+        android:layout_marginTop="95.5dp" 
+        android:fontFamily="monospace"
         />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Desired temperature:"
-        android:textSize="70px"
+        android:textSize="100px"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="192.5dp" 
+        android:layout_marginTop="207.5dp" 
+        android:fontFamily="monospace"
         />
 
     <Button
@@ -42,8 +47,9 @@
         android:layout_height="210px"
         android:text="+ 0.1"
         android:textSize="70px"
-        android:layout_marginTop="247.0dp" 
-        android:layout_marginLeft="20.0dp" 
+        android:layout_marginTop="282.0dp" 
+        android:layout_marginLeft="60.0dp"
+        android:background="@drawable/roundredbutton"   
             />
 
     <Button
@@ -53,7 +59,8 @@
         android:text="+ 1.0"
         android:textSize="70px"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="247.0dp" 
+        android:layout_marginTop="282.0dp" 
+        android:background="@drawable/roundredbutton"
             />
 
     <Button
@@ -62,18 +69,20 @@
         android:layout_height="210px"
         android:text="+ 5.0"
         android:textSize="70px"
-        android:layout_marginTop="247.0dp"
-        android:layout_marginLeft="258.0dp" 
+        android:layout_marginTop="282.0dp"
+        android:layout_marginLeft="225.0dp" 
+        android:background="@drawable/roundredbutton"
             />
 
     <TextView
-        android:text="Initializing..."
+        android:text="Connecting.."
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:textSize="120px"
+        android:textSize="200px"
         android:id="@+id/DesiredTemperatureTextView"
-        android:layout_marginTop="344.0dp" 
+        android:layout_marginTop="359.0dp" 
+        android:fontFamily="monospace"
         />
 
     <Button
@@ -82,8 +91,9 @@
         android:layout_height="210px"
         android:text="- 0.1"
         android:textSize="70px"
-        android:layout_marginTop="423.5dp" 
-        android:layout_marginLeft="20dp" 
+        android:layout_marginTop="458.5dp" 
+        android:layout_marginLeft="60dp" 
+        android:background="@drawable/roundbluebutton"
             />
 
     <Button
@@ -93,7 +103,8 @@
         android:text="- 1.0"
         android:textSize="70px"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="423.5dp" 
+        android:layout_marginTop="458.5dp" 
+        android:background="@drawable/roundbluebutton"
             />
 
     <Button
@@ -102,7 +113,8 @@
         android:layout_height="210px"
         android:text="- 5.0"
         android:textSize="70px"
-        android:layout_marginTop="423.5dp"
-        android:layout_marginLeft="258.0dp" 
+        android:layout_marginTop="458.5dp"
+        android:layout_marginLeft="225.0dp" 
+        android:background="@drawable/roundbluebutton"
             />
 </RelativeLayout>

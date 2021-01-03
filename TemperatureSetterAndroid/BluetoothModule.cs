@@ -23,24 +23,26 @@ namespace TemperatureSetterAndroid
 
         public const int CommunicationDelay = 500;
 
-        public async Task ConnectToBluetooth()
+        public async Task<BluetoothStatus> ConnectToBluetooth()
         {
             BluetoothAdapter adapter = BluetoothAdapter.DefaultAdapter;
             if (adapter == null)
-                throw new Exception("No Bluetooth adapter found.");
+                return BluetoothStatus.NO_ADAPTER;
 
             if (!adapter.IsEnabled)
-                throw new Exception("Bluetooth adapter is not enabled.");
+                return BluetoothStatus.NO_CONNECTION;
 
             BluetoothDevice device = adapter.BondedDevices.Where(bd => bd.Name.Equals(DeviceName)).FirstOrDefault();
 
             if (device == null)
-                throw new Exception("Named device not found.");
+                return BluetoothStatus.NO_DEVICE;
 
             _socket = device.CreateRfcommSocketToServiceRecord(UUID.FromString(Socket));
             await _socket.ConnectAsync();
 
             _buffer = new byte[BufferLength];
+
+            return BluetoothStatus.NO_ERROR;
         }  
 
         public async Task<int> ReadCurrentTemp()

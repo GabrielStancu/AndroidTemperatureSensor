@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Android.App;
 using Android.OS;
 using Android.Support.V7.App;
 using Android.Widget;
+using AlertDialog = Android.App.AlertDialog;
 
 namespace TemperatureSetterAndroid
 {
@@ -24,8 +26,9 @@ namespace TemperatureSetterAndroid
         private readonly string _temperatureDisplayFormat = "{0} °C";
         private readonly double[] _temperatureVariations = new double[] { 0.1, 1.0, 5.0 };
         private readonly int decimalPlaces = 1;
+        private readonly double minTemp = 15.0, maxTemp = 35.0;
 
-        protected async override void OnCreate(Bundle savedInstanceState)
+        protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
             Xamarin.Essentials.Platform.Init(this, savedInstanceState);
@@ -33,7 +36,7 @@ namespace TemperatureSetterAndroid
 
             GetViewsIds();
             AddEventHandlers();
-            await EstablishBluetoothCommunication();
+            EstablishBluetoothCommunication();
         }
 
         private void GetViewsIds()
@@ -88,20 +91,42 @@ namespace TemperatureSetterAndroid
             double crtTemp = double.Parse(_desiredTempTextView.Text.Substring(0, _desiredTempTextView.Text.Length - 2));
             crtTemp += increase;
             crtTemp = Math.Round(crtTemp, decimalPlaces);
+
+            if (crtTemp < minTemp)
+            {
+                crtTemp = minTemp;
+            }
+            else if (crtTemp > maxTemp)
+            {
+                crtTemp = maxTemp;
+            }
+
             _desiredTempTextView.Text = string.Format(_temperatureDisplayFormat, crtTemp);
             await _bluetoothModule.SendDesiredTemp((int)(crtTemp * 10));
         }
 
-        private async Task EstablishBluetoothCommunication()
+        private async void EstablishBluetoothCommunication()
         {
             _bluetoothModule = new BluetoothModule();
-            await _bluetoothModule.ConnectToBluetooth();
+            var connRes = await _bluetoothModule.ConnectToBluetooth();
+
+            if(connRes != BluetoothStatus.NO_ERROR)
+            {
+                System.Diagnostics.Process.GetCurrentProcess().CloseMainWindow();
+            }
 
             while (true)
             {
-                _temperature = Math.Round((double)(await _bluetoothModule.ReadCurrentTemp()) / 10, decimalPlaces);
-                await Task.Delay(BluetoothModule.CommunicationDelay);
-                DisplayCurrentTemperature();
+                try
+                {
+                    _temperature = Math.Round((double)(await _bluetoothModule.ReadCurrentTemp()) / 10, decimalPlaces);
+                    await Task.Delay(BluetoothModule.CommunicationDelay);
+                    DisplayCurrentTemperature();
+                }
+                catch(Exception)
+                {
+                    DisplayError();
+                }
             }        
         }
 
@@ -114,6 +139,19 @@ namespace TemperatureSetterAndroid
                 _initialized = true;
                 _desiredTempTextView.Text = _crtTempTextView.Text;
             }
+        }
+
+        private void DisplayError()
+        {
+            AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+            AlertDialog alert = dialog.Create();
+            alert.SetTitle("Connection lost");
+            alert.SetMessage("Connection to Arduino was lost. Check the connection wires and your Bluetooth connection.");
+
+            alert.SetButton("OK", (c, ev) =>
+            {
+                System.Diagnostics.Process.GetCurrentProcess().CloseMainWindow();
+            });
         }
     }
 }
