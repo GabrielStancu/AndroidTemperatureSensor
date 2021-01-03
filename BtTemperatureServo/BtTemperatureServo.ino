@@ -1,4 +1,5 @@
 #include <Servo.h>
+#include <SoftwareSerial.h>
 
 int txPin = 1;
 int rxPin = 0;
@@ -18,44 +19,47 @@ const int receiveDataPackageStartByteVal = 83; //"S"
 const int receiveDataPackageEndByteVal = 13; 
 const int servoWriteDelay = 100;
 
+SoftwareSerial BT(2,3);
+
 Servo servo;
 void setup() {
   pinMode(digitalPin, INPUT);
   pinMode(analogPin, INPUT);
 
   Serial.begin(9600);
+  BT.begin(9600);
 }
 
 void loop() {
-  if(Serial.available() <= 0)
+  if(BT.available() <= 0)
   {
     temp = analogRead(analogPin);
-    Serial.print(sendDataPackageStartByte);
-    Serial.print(temp); 
-    Serial.println();
+    BT.print(sendDataPackageStartByte);
+    BT.print(temp); 
+    BT.println();
+    delay(1000);
   }
   else 
   {
     readData();
-    delay(100);
   }
 }
 
 void readData()
 {
-  if (Serial.available())
+  if (BT.available())
   {       
     char temp[3];
-    while(Serial.available() > 0)
+    while(BT.available() > 0)
     {
-      char crtByte = Serial.read();
+      char crtByte = BT.read();
       if (crtByte == receiveDataPackageStartByteVal) 
       {
-        temp[0] = Serial.read();
-        temp[1] = Serial.read();
-        temp[2] = Serial.read();
+        temp[0] = BT.read();
+        temp[1] = BT.read();
+        temp[2] = BT.read();
 
-        if(Serial.read() != receiveDataPackageEndByteVal)
+        if(BT.read() != receiveDataPackageEndByteVal)
         {
           return;
         }
@@ -66,7 +70,15 @@ void readData()
     
     int desiredTemp = atoi(temp);
     int desiredAngle = map(desiredTemp, minTemp, maxTemp, minAngle, maxAngle);
+
+    Serial.println("Desired Temperature:");
+    Serial.println(desiredTemp);
+
+    Serial.println("Desired Angle:");
+    Serial.println(desiredAngle);
+    
     turnServo(desiredAngle);
+    delay(1000);
   }
 }
 
@@ -75,6 +87,7 @@ void turnServo(int angle)
   servo.attach(servoPin);
   delay(servoWriteDelay);
   servo.write(angle);
+  delay(1000);
   servo.detach();
   delay(servoWriteDelay);
 }
