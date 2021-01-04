@@ -36,7 +36,9 @@ void loop() {
   {
     temp = analogRead(analogPin);
     BT.print(sendDataPackageStartByte);
-    BT.print(temp); 
+    BT.print(temp/100);
+    BT.print(temp/10%10);
+    BT.print(temp%10); 
     BT.println();
     delay(communicationDelay);
   }
