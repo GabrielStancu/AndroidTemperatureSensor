@@ -14,6 +14,8 @@ namespace TemperatureSetterAndroid
     {
         private TextView _crtTempTextView;
         private TextView _desiredTempTextView;
+        private TextView _crtTempLabel;
+        private TextView _desiredTempLabel;
         private Button _increaseTempButton0;
         private Button _increaseTempButton1;
         private Button _increaseTempButton5;
@@ -28,6 +30,7 @@ namespace TemperatureSetterAndroid
         private readonly double[] _temperatureVariations = new double[] { 0.1, 1.0, 5.0 };
         private readonly int decimalPlaces = 1;
         private readonly double minTemp = 15.0, maxTemp = 35.0;
+        private readonly int _closeAppSeconds = 5;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -52,6 +55,9 @@ namespace TemperatureSetterAndroid
 
             _crtTempTextView = FindViewById<TextView>(Resource.Id.CrtTemperatureTextView);
             _desiredTempTextView = FindViewById<TextView>(Resource.Id.DesiredTemperatureTextView);
+
+            _crtTempLabel = FindViewById<TextView>(Resource.Id.CrtTemperatureLabel);
+            _desiredTempLabel = FindViewById<TextView>(Resource.Id.DesiredTemperatureLabel);
         }
 
         private void AddEventHandlers()
@@ -113,68 +119,79 @@ namespace TemperatureSetterAndroid
 
             while (true)
             {
-                try
-                {
-                    int readTemp = await _bluetoothModule.ReadCurrentTemp();
-                    await Task.Delay(BluetoothModule.CommunicationDelay);
-                    if (readTemp < 0)
-                    {                   
-                        DisplayCurrentTemperature(true);
-                        break;
-                    }
-                    else
-                    {
-                        _temperature = Math.Round((double)readTemp / 10, decimalPlaces);
-                        DisplayCurrentTemperature(false);
-                    }
-                    
+                int readTemp = await _bluetoothModule.ReadCurrentTemp();
+                await Task.Delay(BluetoothModule.CommunicationDelay);
+                if (readTemp < 0)
+                {                   
+                    DisplayCurrentStatus(true);
+                    break;
                 }
-                catch (Exception)
+                else
                 {
-                    _bluetoothStatus = BluetoothStatus.NO_DEVICE;
-                    DisplayCurrentTemperature(true);
+                    _temperature = Math.Round((double)readTemp / 10, decimalPlaces);
+                    DisplayCurrentStatus(false);
                 }
             }
         }
 
-        private void DisplayCurrentTemperature(bool err)
+        private async void DisplayCurrentStatus(bool errorEncountered)
         {
-            if(err)
+            if(errorEncountered)
             {
-                _crtTempTextView.TextSize = 40;
-                switch(_bluetoothStatus)
-                {
-                    case BluetoothStatus.NO_ADAPTER:
-                        _crtTempTextView.Text = "No adapter.";
-                        break;
-                    case BluetoothStatus.NO_CONNECTION:
-                        _crtTempTextView.Text = "No connection.";
-                        break;
-                    case BluetoothStatus.NO_DEVICE:
-                        _crtTempTextView.Text = "No device.";
-                        break;
-                    default: 
-                        break;
-                }
-
-                _desiredTempTextView.Visibility = Android.Views.ViewStates.Invisible;
-                _decreaseTempButton0.Visibility = Android.Views.ViewStates.Invisible;
-                _decreaseTempButton1.Visibility = Android.Views.ViewStates.Invisible;
-                _decreaseTempButton5.Visibility = Android.Views.ViewStates.Invisible;
-                _increaseTempButton0.Visibility = Android.Views.ViewStates.Invisible;
-                _increaseTempButton1.Visibility = Android.Views.ViewStates.Invisible;
-                _increaseTempButton5.Visibility = Android.Views.ViewStates.Invisible;
+                SetErrorMessage();
+                HideControls();
+                await Task.Delay(_closeAppSeconds * 1000);
+                CloseApp();
             }
             else
             {
-                _crtTempTextView.Text = string.Format(_temperatureDisplayFormat, _temperature);
-
-                if (!_initialized)
-                {
-                    _initialized = true;
-                    _desiredTempTextView.Text = _crtTempTextView.Text;
-                }
+                DisplayCurrentTemperature();
             } 
+        }
+
+        private void DisplayCurrentTemperature()
+        {
+            _crtTempTextView.Text = string.Format(_temperatureDisplayFormat, _temperature);
+
+            if (!_initialized)
+            {
+                _initialized = true;
+                _desiredTempTextView.Text = _crtTempTextView.Text;
+            }
+        }
+
+        private void HideControls()
+        {
+            _desiredTempTextView.Visibility = Android.Views.ViewStates.Invisible;
+            _decreaseTempButton0.Visibility = Android.Views.ViewStates.Invisible;
+            _decreaseTempButton1.Visibility = Android.Views.ViewStates.Invisible;
+            _decreaseTempButton5.Visibility = Android.Views.ViewStates.Invisible;
+            _increaseTempButton0.Visibility = Android.Views.ViewStates.Invisible;
+            _increaseTempButton1.Visibility = Android.Views.ViewStates.Invisible;
+            _increaseTempButton5.Visibility = Android.Views.ViewStates.Invisible;
+            _crtTempLabel.Visibility = Android.Views.ViewStates.Invisible;
+            _desiredTempLabel.Visibility = Android.Views.ViewStates.Invisible;
+        }
+
+        private void SetErrorMessage()
+        {
+            _crtTempTextView.TextSize = 28;
+            switch (_bluetoothStatus)
+            {
+                case BluetoothStatus.NO_ADAPTER:
+                    _crtTempTextView.Text = "Your device has no Bluetooth adapter.";
+                    break;
+                case BluetoothStatus.NO_CONNECTION:
+                    _crtTempTextView.Text = "Your Bluetooth is turned off. Please turn it on before running the app.";
+                    break;
+                case BluetoothStatus.NO_DEVICE:
+                    _crtTempTextView.Text = "No temperature device was found.";
+                    break;
+                default:
+                    break;
+            }
+
+            _crtTempTextView.Text += $" The application will close in {_closeAppSeconds} seconds.";
         }
 
         private void CloseApp()

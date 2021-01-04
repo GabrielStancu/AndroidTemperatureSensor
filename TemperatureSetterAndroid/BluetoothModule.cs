@@ -36,8 +36,15 @@ namespace TemperatureSetterAndroid
             if (device == null)
                 return BluetoothStatus.NO_DEVICE;
 
-            _socket = device.CreateRfcommSocketToServiceRecord(UUID.FromString(Socket));
-            await _socket.ConnectAsync();
+            try
+            {
+                _socket = device.CreateRfcommSocketToServiceRecord(UUID.FromString(Socket));
+                await _socket.ConnectAsync();
+            }
+            catch (Exception)
+            {
+                return BluetoothStatus.NO_DEVICE;
+            }
 
             _buffer = new byte[BufferLength];
 
