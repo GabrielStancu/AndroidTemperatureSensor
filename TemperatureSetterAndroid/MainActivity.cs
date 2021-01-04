@@ -5,7 +5,6 @@ using Android.App;
 using Android.OS;
 using Android.Support.V7.App;
 using Android.Widget;
-using AlertDialog = Android.App.AlertDialog;
 
 namespace TemperatureSetterAndroid
 {
@@ -30,7 +29,6 @@ namespace TemperatureSetterAndroid
         private readonly double[] _temperatureVariations = new double[] { 0.1, 1.0, 5.0 };
         private readonly int decimalPlaces = 1;
         private readonly double minTemp = 15.0, maxTemp = 35.0;
-        private readonly int _closeAppSeconds = 5;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -140,7 +138,7 @@ namespace TemperatureSetterAndroid
             {
                 SetErrorMessage();
                 HideControls();
-                await Task.Delay(_closeAppSeconds * 1000);
+                await DisplayErrorSource();
                 CloseApp();
             }
             else
@@ -175,7 +173,9 @@ namespace TemperatureSetterAndroid
 
         private void SetErrorMessage()
         {
-            _crtTempTextView.TextSize = 28;
+            int errorTextSize = 28;
+
+            _crtTempTextView.TextSize = errorTextSize;
             switch (_bluetoothStatus)
             {
                 case BluetoothStatus.NO_ADAPTER:
@@ -189,9 +189,20 @@ namespace TemperatureSetterAndroid
                     break;
                 default:
                     break;
-            }
+            }      
+        }
 
-            _crtTempTextView.Text += $" The application will close in {_closeAppSeconds} seconds.";
+        private async Task DisplayErrorSource()
+        {
+            int closeAppSeconds = 5;
+            const int millisecondsInASecond = 1000;
+            string baseText = _crtTempTextView.Text;
+
+            for (int seconds = closeAppSeconds; seconds > 0; seconds--)
+            {
+                _crtTempTextView.Text = baseText + $" The application will close in {seconds} second(s).";
+                await Task.Delay(millisecondsInASecond);
+            }
         }
 
         private void CloseApp()
