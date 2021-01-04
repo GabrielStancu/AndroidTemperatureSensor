@@ -75,7 +75,7 @@ void readData()
     int desiredAngle = map(desiredTemp, minTemp, maxTemp, minAngle, maxAngle);
     printDataToSerial(desiredTemp, desiredAngle);   
     
-    turnServo(desiredAngle);
+    turnServo(desiredAngle); //attach servo, write value, dettach
   }
 }
 
