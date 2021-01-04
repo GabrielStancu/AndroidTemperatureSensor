@@ -1,8 +1,8 @@
 #include <Servo.h>
 #include <SoftwareSerial.h>
 
-int txPin = 1;
-int rxPin = 0;
+int rxPin = 2;
+int txPin = 3;
 int digitalPin = 7; // KY-028 digital interface
 int analogPin = A2; // KY-028 analog interface
 int servoPin = 11;
@@ -20,7 +20,7 @@ const int receiveDataPackageEndByteVal = 13;
 const int communicationDelay = 1000;
 const int servoDelay = 100;
 
-SoftwareSerial BT(2,3);
+SoftwareSerial BT(rxPin,txPin);
 
 Servo servo;
 void setup() {

@@ -1,10 +1,10 @@
 ﻿using System;
-using System.Threading;
 using System.Threading.Tasks;
 using Android.App;
 using Android.OS;
 using Android.Support.V7.App;
 using Android.Widget;
+using Android.Views;
 
 namespace TemperatureSetterAndroid
 {
@@ -38,6 +38,7 @@ namespace TemperatureSetterAndroid
 
             GetViewsIds();
             AddEventHandlers();
+            HideControls(ViewStates.Invisible);
             EstablishBluetoothCommunication();
         }
 
@@ -137,12 +138,16 @@ namespace TemperatureSetterAndroid
             if(errorEncountered)
             {
                 SetErrorMessage();
-                HideControls();
+                HideControls(ViewStates.Invisible);
                 await DisplayErrorSource();
                 CloseApp();
             }
             else
             {
+                if (!_initialized)
+                {
+                    HideControls(ViewStates.Visible);
+                }
                 DisplayCurrentTemperature();
             } 
         }
@@ -158,17 +163,17 @@ namespace TemperatureSetterAndroid
             }
         }
 
-        private void HideControls()
+        private void HideControls(ViewStates viewState)
         {
-            _desiredTempTextView.Visibility = Android.Views.ViewStates.Invisible;
-            _decreaseTempButton0.Visibility = Android.Views.ViewStates.Invisible;
-            _decreaseTempButton1.Visibility = Android.Views.ViewStates.Invisible;
-            _decreaseTempButton5.Visibility = Android.Views.ViewStates.Invisible;
-            _increaseTempButton0.Visibility = Android.Views.ViewStates.Invisible;
-            _increaseTempButton1.Visibility = Android.Views.ViewStates.Invisible;
-            _increaseTempButton5.Visibility = Android.Views.ViewStates.Invisible;
-            _crtTempLabel.Visibility = Android.Views.ViewStates.Invisible;
-            _desiredTempLabel.Visibility = Android.Views.ViewStates.Invisible;
+            _desiredTempTextView.Visibility = viewState;
+            _decreaseTempButton0.Visibility = viewState;
+            _decreaseTempButton1.Visibility = viewState;
+            _decreaseTempButton5.Visibility = viewState;
+            _increaseTempButton0.Visibility = viewState;
+            _increaseTempButton1.Visibility = viewState;
+            _increaseTempButton5.Visibility = viewState;
+            _crtTempLabel.Visibility = viewState;
+            _desiredTempLabel.Visibility = viewState;
         }
 
         private void SetErrorMessage()
