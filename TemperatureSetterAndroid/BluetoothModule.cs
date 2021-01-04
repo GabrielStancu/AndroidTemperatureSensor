@@ -20,8 +20,7 @@ namespace TemperatureSetterAndroid
         private const int PackageLength = 5;
         private const int ShortPackageLength = 3;
         private const int NoDataReceivedCode = -1;
-
-        public const int CommunicationDelay = 500;
+        public const int CommunicationDelay = 1000;
 
         public async Task<BluetoothStatus> ConnectToBluetooth()
         {
@@ -47,15 +46,22 @@ namespace TemperatureSetterAndroid
 
         public async Task<int> ReadCurrentTemp()
         {
-            await _socket.InputStream.ReadAsync(_buffer, 0, _buffer.Length);
-            int packageStart = GetPackageStartByteIndex();
-
-            if(packageStart == NoDataReceivedCode)
+            try
             {
-                throw new Exception("No data received.");
-            }
+                await _socket.InputStream.ReadAsync(_buffer, 0, _buffer.Length);
+                int packageStart = GetPackageStartByteIndex();
 
-            return ComputeCurrentTemp(packageStart);
+                if (packageStart == NoDataReceivedCode)
+                {
+                    throw new Exception("No data received.");
+                }
+
+                return ComputeCurrentTemp(packageStart);
+            }
+            catch(Exception)
+            {
+                return -1;
+            }        
         }
 
         private int GetPackageStartByteIndex()

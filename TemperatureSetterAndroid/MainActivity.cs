@@ -23,6 +23,7 @@ namespace TemperatureSetterAndroid
         private BluetoothModule _bluetoothModule;
         private bool _initialized = false;
         private double _temperature = 0.0f;
+        private BluetoothStatus _bluetoothStatus;
         private readonly string _temperatureDisplayFormat = "{0} °C";
         private readonly double[] _temperatureVariations = new double[] { 0.1, 1.0, 5.0 };
         private readonly int decimalPlaces = 1;
@@ -108,50 +109,77 @@ namespace TemperatureSetterAndroid
         private async void EstablishBluetoothCommunication()
         {
             _bluetoothModule = new BluetoothModule();
-            var connRes = await _bluetoothModule.ConnectToBluetooth();
-
-            if(connRes != BluetoothStatus.NO_ERROR)
-            {
-                System.Diagnostics.Process.GetCurrentProcess().CloseMainWindow();
-            }
+            _bluetoothStatus = await _bluetoothModule.ConnectToBluetooth();
 
             while (true)
             {
                 try
                 {
-                    _temperature = Math.Round((double)(await _bluetoothModule.ReadCurrentTemp()) / 10, decimalPlaces);
+                    int readTemp = await _bluetoothModule.ReadCurrentTemp();
                     await Task.Delay(BluetoothModule.CommunicationDelay);
-                    DisplayCurrentTemperature();
+                    if (readTemp < 0)
+                    {                   
+                        DisplayCurrentTemperature(true);
+                        break;
+                    }
+                    else
+                    {
+                        _temperature = Math.Round((double)readTemp / 10, decimalPlaces);
+                        DisplayCurrentTemperature(false);
+                    }
+                    
                 }
-                catch(Exception)
+                catch (Exception)
                 {
-                    DisplayError();
+                    _bluetoothStatus = BluetoothStatus.NO_DEVICE;
+                    DisplayCurrentTemperature(true);
                 }
-            }        
-        }
-
-        private void DisplayCurrentTemperature()
-        {
-            _crtTempTextView.Text = string.Format(_temperatureDisplayFormat, _temperature);
-
-            if (!_initialized)
-            {
-                _initialized = true;
-                _desiredTempTextView.Text = _crtTempTextView.Text;
             }
         }
 
-        private void DisplayError()
+        private void DisplayCurrentTemperature(bool err)
         {
-            AlertDialog.Builder dialog = new AlertDialog.Builder(this);
-            AlertDialog alert = dialog.Create();
-            alert.SetTitle("Connection lost");
-            alert.SetMessage("Connection to Arduino was lost. Check the connection wires and your Bluetooth connection.");
-
-            alert.SetButton("OK", (c, ev) =>
+            if(err)
             {
-                System.Diagnostics.Process.GetCurrentProcess().CloseMainWindow();
-            });
+                _crtTempTextView.TextSize = 40;
+                switch(_bluetoothStatus)
+                {
+                    case BluetoothStatus.NO_ADAPTER:
+                        _crtTempTextView.Text = "No adapter.";
+                        break;
+                    case BluetoothStatus.NO_CONNECTION:
+                        _crtTempTextView.Text = "No connection.";
+                        break;
+                    case BluetoothStatus.NO_DEVICE:
+                        _crtTempTextView.Text = "No device.";
+                        break;
+                    default: 
+                        break;
+                }
+
+                _desiredTempTextView.Visibility = Android.Views.ViewStates.Invisible;
+                _decreaseTempButton0.Visibility = Android.Views.ViewStates.Invisible;
+                _decreaseTempButton1.Visibility = Android.Views.ViewStates.Invisible;
+                _decreaseTempButton5.Visibility = Android.Views.ViewStates.Invisible;
+                _increaseTempButton0.Visibility = Android.Views.ViewStates.Invisible;
+                _increaseTempButton1.Visibility = Android.Views.ViewStates.Invisible;
+                _increaseTempButton5.Visibility = Android.Views.ViewStates.Invisible;
+            }
+            else
+            {
+                _crtTempTextView.Text = string.Format(_temperatureDisplayFormat, _temperature);
+
+                if (!_initialized)
+                {
+                    _initialized = true;
+                    _desiredTempTextView.Text = _crtTempTextView.Text;
+                }
+            } 
+        }
+
+        private void CloseApp()
+        {
+            System.Diagnostics.Process.GetCurrentProcess().Kill();
         }
     }
 }
