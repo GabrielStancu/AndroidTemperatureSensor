@@ -2,10 +2,10 @@
 
 Arduino:
 
-HC-05 Bluetooth module
-KY-028 Digital temperature sensor
-SG90 Servomotor
-Arduino UNO board 
+HC-05 Bluetooth module;
+KY-028 Digital temperature sensor;
+SG90 Servomotor;
+Arduino UNO board.
 
 The temperature sensor collects data about the temperature of the room, sends it to the Arduino board which then sends it to eventual receivers using the Bluetooth module. 
 
